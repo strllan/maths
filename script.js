@@ -1,4 +1,4 @@
-// Times Table Trainer - fixed & improved
+// Times Table Trainer - auto-focus version
 
 const minAInput = document.getElementById("minA");
 const maxAInput = document.getElementById("maxA");
@@ -47,17 +47,11 @@ function validateAndSetBounds() {
   const minB = parseIntOrDefault(minBInput.value, bounds.minB);
   const maxB = parseIntOrDefault(maxBInput.value, bounds.maxB);
 
-  if (minA < 0 || maxA < 0 || minB < 0 || maxB < 0) {
+  if (minA < 0 || maxA < 0 || minB < 0 || maxB < 0)
     throw new Error("Bounds must be zero or positive.");
-  }
 
-  if (minA > maxA) {
-    throw new Error("For A: Min must be ≤ Max.");
-  }
-
-  if (minB > maxB) {
-    throw new Error("For B: Min must be ≤ Max.");
-  }
+  if (minA > maxA) throw new Error("For A: Min must be ≤ Max.");
+  if (minB > maxB) throw new Error("For B: Min must be ≤ Max.");
 
   bounds = { minA, maxA, minB, maxB };
 }
@@ -66,27 +60,33 @@ function randomIntInclusive(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function focusInput() {
+  // 30ms delay avoids browser blocking the focus
+  setTimeout(() => {
+    answerInput.focus();
+    answerInput.select();
+  }, 30);
+}
+
 function generateQuestion() {
   const a = randomIntInclusive(bounds.minA, bounds.maxA);
   const b = randomIntInclusive(bounds.minB, bounds.maxB);
 
   currentQuestion = { a, b };
-
   questionText.textContent = `${a} × ${b} = ?`;
 
-  // Reset feedback + input
   feedbackEl.textContent = "";
   feedbackEl.classList.remove("correct", "incorrect");
 
   answerInput.value = "";
-  answerInput.focus();
+  focusInput();
 }
 
 function updateStats(isCorrect) {
-  stats.total += 1;
+  stats.total++;
   if (isCorrect) {
-    stats.correct += 1;
-    stats.streak += 1;
+    stats.correct++;
+    stats.streak++;
   } else {
     stats.streak = 0;
   }
@@ -100,12 +100,8 @@ function updateStats(isCorrect) {
   statStreak.textContent = stats.streak;
 }
 
-function handleAnswerSubmit(event) {
-  if (event) event.preventDefault();
-
-  if (currentQuestion.a === null || currentQuestion.b === null) {
-    return;
-  }
+function handleAnswerSubmit(e) {
+  if (e) e.preventDefault();
 
   const userAnswer = parseInt(answerInput.value, 10);
   const correctAnswer = currentQuestion.a * currentQuestion.b;
@@ -114,6 +110,7 @@ function handleAnswerSubmit(event) {
     feedbackEl.textContent = "Please type a number.";
     feedbackEl.classList.remove("correct");
     feedbackEl.classList.add("incorrect");
+    focusInput();
     return;
   }
 
@@ -121,17 +118,21 @@ function handleAnswerSubmit(event) {
   updateStats(isCorrect);
 
   if (isCorrect) {
-    feedbackEl.textContent = "✅ Correct! Nice.";
+    feedbackEl.textContent = "✅ Correct!";
     feedbackEl.classList.remove("incorrect");
     feedbackEl.classList.add("correct");
 
-    // Short pause to see result, then auto-next
-    setTimeout(generateQuestion, 350);
+    setTimeout(() => {
+      generateQuestion();
+      focusInput();
+    }, 350);
   } else {
-    feedbackEl.textContent = `❌ Oops. The answer is ${correctAnswer}.`;
+    feedbackEl.textContent = `❌ Incorrect. Answer: ${correctAnswer}`;
     feedbackEl.classList.remove("correct");
     feedbackEl.classList.add("incorrect");
-    // You can change your answer and hit Enter again for the next Q
+
+    // Let user type a new answer
+    focusInput();
   }
 }
 
@@ -140,19 +141,17 @@ function handleApplySettings() {
     validateAndSetBounds();
     settingsError.textContent = "";
     generateQuestion();
+    focusInput();
   } catch (err) {
     settingsError.textContent = err.message;
   }
 }
 
 function init() {
-  // Wire up Apply button
   applySettingsBtn.addEventListener("click", handleApplySettings);
 
-  // Form submit (click or Enter in the input)
   answerForm.addEventListener("submit", handleAnswerSubmit);
 
-  // EXTRA: allow Enter key in the answer box to submit fast
   answerInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -160,11 +159,11 @@ function init() {
     }
   });
 
-  // Show an initial question with default bounds
   generateQuestion();
+  focusInput();
 }
 
-// Make sure DOM is ready before wiring up
+// Ensure initialization
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", init);
 } else {
