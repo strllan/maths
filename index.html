@@ -47,7 +47,8 @@
           </div>
         </div>
 
-        <button id="applySettings" class="primary-btn">
+        <!-- Important: type="button" so it doesn't submit the form -->
+        <button id="applySettings" class="primary-btn" type="button">
           Apply & Start
         </button>
         <p id="settingsError" class="error-text" aria-live="polite"></p>
@@ -65,7 +66,7 @@
             type="number"
             id="answerInput"
             inputmode="numeric"
-            placeholder="Type your answer"
+            placeholder="Type your answer and press Enter"
             required
           />
           <button type="submit" class="primary-btn">
@@ -108,6 +109,7 @@
     </footer>
   </div>
 
+  <!-- Script at the very end so DOM elements exist before JS runs -->
   <script src="script.js"></script>
 </body>
 </html>
